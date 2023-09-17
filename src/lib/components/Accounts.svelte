@@ -106,6 +106,13 @@
       $addAccountMutation.mutate(accountName);
     }}>
     <Input placeholder="Add a new account" bind:value={accountName} />
+    <select
+      name="accountType"
+      id="accountType"
+      class="rounded-md border border-zinc-800 bg-background px-3 text-sm">
+      <option value="1">Cash-on-hand</option>
+      <option value="2">Credit Card</option>
+    </select>
     <Button variant="outline" disabled={loading}>Add</Button>
   </form>
 
