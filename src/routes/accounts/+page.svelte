@@ -67,13 +67,6 @@
 
       const accountTypes = client.getQueryData<AccountType[]>(['account_types']);
 
-      // accountTypes?.push({
-      //   id: -1,
-      //   name: accountTypeName,
-      //   created_at: new Date(),
-      //   updated_at: new Date()
-      // });
-
       client.setQueryData<AccountType[]>(['account_types'], []); // this forces a re-render
       client.setQueryData<AccountType[]>(['account_types'], accountTypes);
     },
