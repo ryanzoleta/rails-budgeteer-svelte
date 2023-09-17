@@ -32,11 +32,11 @@
               $page.url.pathname === '/budget' ? 'text-cyan-400 underline' : 'text-zinc-400'
             )}>Budget</a>
           <a
-            href="/expenses"
+            href="/transactions"
             class={twMerge(
               'underline-offset-4 transition-all duration-200 hover:underline',
-              $page.url.pathname === '/expenses' ? 'text-cyan-400 underline' : 'text-zinc-400'
-            )}>Expenses</a>
+              $page.url.pathname === '/transactions' ? 'text-cyan-400 underline' : 'text-zinc-400'
+            )}>Transactions</a>
           <a
             href="/accounts"
             class={twMerge(
