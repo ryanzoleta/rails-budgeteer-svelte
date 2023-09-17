@@ -45,7 +45,9 @@
   const addAccountTypeMutation = createMutation({
     mutationKey: ['add', 'account_type'],
     mutationFn: async (accountTypeName: string) => {
+      loading = true;
       await axios.post(`${data.apiHost}/account_types`, { name: accountTypeName });
+      loading = false;
     },
     onMutate: async () => {
       await client.cancelQueries(['account_types']);
@@ -121,10 +123,12 @@
   const addAccountMutation = createMutation({
     mutationKey: ['add', 'account'],
     mutationFn: async (account: Account) => {
+      loading = true;
       await axios.post(`${data.apiHost}/accounts`, {
         name: account.name,
         account_type_id: account.account_type_id
       });
+      loading = false;
     },
     onMutate: async (account: Account) => {
       await client.cancelQueries(['accounts']);
@@ -210,44 +214,47 @@
           {/each}
         {/if}
       </select>
-      <Button variant="outline" disabled={loading}>Add</Button>
+      <Button variant="default" disabled={loading}>Add</Button>
     </form>
 
     <div class="flex flex-col gap-3">
       {#if $accountQuery.data}
         {#each $accountQuery.data as account}
-          <button
-            class="flex place-content-between place-items-center gap-2 rounded-md bg-green-950 px-5 py-2"
-            on:click|stopPropagation={() => {
-              editingAccountId = account.id;
-            }}>
-            {#if editingAccountId === account.id}
-              <form
-                on:submit={() => {
+          {#if editingAccountId === account.id}
+            <form
+              on:submit={() => {
+                $editAccountMutation.mutate(account);
+                editingAccountId = 0;
+              }}
+              class="flex flex-1 gap-3 py-2">
+              <Input
+                bind:value={account.name}
+                on:blur={() => {
                   $editAccountMutation.mutate(account);
-                  editingAccountId = 0;
                 }}
-                class="flex-1">
-                <Input
-                  bind:value={account.name}
-                  on:blur={() => {
-                    $editAccountMutation.mutate(account);
-                  }}
-                  autofocus />
-              </form>
-            {:else}
-              <p>{account.name}</p>
-            {/if}
+                class="text-base"
+                autofocus />
 
-            <Button
-              variant="ghost"
-              size="icon"
-              class="group hover:bg-destructive"
-              on:click={(e) => {
-                e.stopPropagation();
-                $deleteAccountMutation.mutate(account);
-              }}><Trash2 class="h-5 w-5 text-zinc-500 group-hover:text-red-300" /></Button>
-          </button>
+              <Button variant="secondary">Save</Button>
+            </form>
+          {:else}
+            <button
+              class="flex place-content-between place-items-center gap-2 rounded-md bg-green-950 px-5 py-2"
+              on:click|stopPropagation={() => {
+                editingAccountId = account.id;
+              }}>
+              <p>{account.name}</p>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                class="group hover:bg-destructive"
+                on:click={(e) => {
+                  e.stopPropagation();
+                  $deleteAccountMutation.mutate(account);
+                }}><Trash2 class="h-5 w-5 text-zinc-500 group-hover:text-red-300" /></Button>
+            </button>
+          {/if}
         {/each}
       {/if}
     </div>
@@ -262,44 +269,47 @@
         $addAccountTypeMutation.mutate(accountTypeName);
       }}>
       <Input placeholder="Add a new account type" bind:value={accountTypeName} />
-      <Button variant="outline" disabled={loading}>Add</Button>
+      <Button variant="default" disabled={loading}>Add</Button>
     </form>
 
     <div class="flex flex-col gap-3">
       {#if $accountTypesQuery.data}
         {#each $accountTypesQuery.data as accountType}
-          <button
-            class="flex place-content-between place-items-center gap-2 rounded-md border-2 border-green-950 px-5 py-2"
-            on:click|stopPropagation={() => {
-              editingAccountTypeId = accountType.id;
-            }}>
-            {#if editingAccountTypeId === accountType.id}
-              <form
-                on:submit={() => {
+          {#if editingAccountTypeId === accountType.id}
+            <form
+              on:submit={() => {
+                $editAccountTypeMutation.mutate(accountType);
+                editingAccountTypeId = 0;
+              }}
+              class="flex flex-1 gap-3 border-2 border-zinc-950 py-2">
+              <Input
+                bind:value={accountType.name}
+                on:blur={() => {
                   $editAccountTypeMutation.mutate(accountType);
-                  editingAccountTypeId = 0;
                 }}
-                class="flex-1">
-                <Input
-                  bind:value={accountType.name}
-                  on:blur={() => {
-                    $editAccountTypeMutation.mutate(accountType);
-                  }}
-                  autofocus />
-              </form>
-            {:else}
-              <p>{accountType.name}</p>
-            {/if}
+                class="text-base"
+                autofocus />
 
-            <Button
-              variant="ghost"
-              size="icon"
-              class="group hover:bg-destructive"
-              on:click={(e) => {
-                e.stopPropagation();
-                $deleteAccountTypeMutation.mutate(accountType);
-              }}><Trash2 class="h-5 w-5 text-zinc-500 group-hover:text-red-300" /></Button>
-          </button>
+              <Button variant="secondary">Save</Button>
+            </form>
+          {:else}
+            <button
+              class="flex place-content-between place-items-center gap-2 rounded-md border-2 border-green-950 px-5 py-2"
+              on:click|stopPropagation={() => {
+                editingAccountTypeId = accountType.id;
+              }}>
+              <p>{accountType.name}</p>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                class="group hover:bg-destructive"
+                on:click={(e) => {
+                  e.stopPropagation();
+                  $deleteAccountTypeMutation.mutate(accountType);
+                }}><Trash2 class="h-5 w-5 text-zinc-500 group-hover:text-red-300" /></Button>
+            </button>
+          {/if}
         {/each}
       {/if}
     </div>
