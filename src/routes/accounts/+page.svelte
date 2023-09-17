@@ -195,8 +195,7 @@
     <form
       class="flex gap-2"
       on:submit={() => {
-        $addAccountMutation.mutate(Object.assign(accountToBeAdded));
-        accountToBeAdded.name = '';
+        $addAccountMutation.mutate(structuredClone(accountToBeAdded));
       }}>
       <Input placeholder="Add a new account" bind:value={accountToBeAdded.name} />
       <select
