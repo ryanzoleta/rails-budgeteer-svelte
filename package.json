@@ -33,6 +33,9 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@tanstack/svelte-query": "^4.35.3",
+		"axios": "^1.5.0",
+		"bits-ui": "^0.5.7",
 		"clsx": "^2.0.0",
 		"lucide-svelte": "^0.279.0",
 		"tailwind-merge": "^1.14.0",
