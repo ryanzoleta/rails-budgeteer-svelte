@@ -10,10 +10,17 @@
   export let data;
 
   let loading = false;
-  let accountName = '';
   let accountTypeName = '';
   let editingAccountId = 0;
   let editingAccountTypeId = 0;
+
+  let accountToBeAdded: Account = {
+    id: 0,
+    name: '',
+    account_type_id: 0,
+    created_at: new Date(),
+    updated_at: new Date()
+  };
 
   onMount(() => {
     document.addEventListener('click', () => {
@@ -25,8 +32,11 @@
   const accountTypesQuery = createQuery({
     queryKey: ['account_types'],
     queryFn: async () => {
-      const response = await axios.get(`${data.apiHost}/account_types`);
-      return response.data as AccountType[];
+      const response = (await axios.get(`${data.apiHost}/account_types`)).data as AccountType[];
+
+      if (accountToBeAdded.account_type_id === 0) accountToBeAdded.account_type_id = response[0].id;
+
+      return response;
     }
   });
 
@@ -110,17 +120,20 @@
 
   const addAccountMutation = createMutation({
     mutationKey: ['add', 'account'],
-    mutationFn: async (accountName: string) => {
-      await axios.post(`${data.apiHost}/accounts`, { name: accountName, account_type_id: 1 });
+    mutationFn: async (account: Account) => {
+      await axios.post(`${data.apiHost}/accounts`, {
+        name: account.name,
+        account_type_id: account.account_type_id
+      });
     },
-    onMutate: async () => {
+    onMutate: async (account: Account) => {
       await client.cancelQueries(['accounts']);
 
       const accounts = client.getQueryData<Account[]>(['accounts']);
 
       accounts?.push({
         id: -1,
-        name: accountName,
+        name: account.name,
         account_type_id: 1,
         created_at: new Date(),
         updated_at: new Date()
@@ -128,7 +141,6 @@
 
       client.setQueryData<Account[]>(['accounts'], []); // this forces a re-render
       client.setQueryData<Account[]>(['accounts'], accounts);
-      accountName = '';
     },
     onSettled: () => {
       client.invalidateQueries(['accounts']);
@@ -183,15 +195,21 @@
     <form
       class="flex gap-2"
       on:submit={() => {
-        $addAccountMutation.mutate(accountName);
+        $addAccountMutation.mutate(Object.assign(accountToBeAdded));
+        accountToBeAdded.name = '';
       }}>
-      <Input placeholder="Add a new account" bind:value={accountName} />
+      <Input placeholder="Add a new account" bind:value={accountToBeAdded.name} />
       <select
         name="accountType"
         id="accountType"
-        class="rounded-md border border-zinc-800 bg-background px-3 text-sm">
-        <option value="1">Cash-on-hand</option>
-        <option value="2">Credit Card</option>
+        class="rounded-md border border-zinc-800 bg-background px-3 text-sm"
+        bind:value={accountToBeAdded.account_type_id}>
+        {#if $accountTypesQuery.data}
+          {#each $accountTypesQuery.data as accountType, index}
+            <option value={accountType.id} selected={index === 0 ? true : false}
+              >{accountType.name}</option>
+          {/each}
+        {/if}
       </select>
       <Button variant="outline" disabled={loading}>Add</Button>
     </form>
