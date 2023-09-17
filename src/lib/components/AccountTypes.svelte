@@ -96,6 +96,8 @@
       client.invalidateQueries(['account_types']);
     }
   });
+
+  
 </script>
 
 <div class="flex flex-col gap-3">
