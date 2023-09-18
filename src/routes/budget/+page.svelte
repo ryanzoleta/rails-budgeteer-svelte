@@ -77,23 +77,6 @@
       const response = await axios.get(`${data.apiHost}/budgets`, { params: { year } });
       const budgets = response.data as Budget[];
 
-      if ($categoriesQuery.data) {
-        for (const month of monthsInAYear) {
-          const monthBudget = budgets.find((b) => b.month === month.id + 1);
-
-          if (!monthBudget) {
-            for (const c of $categoriesQuery.data) {
-              await axios.post(`${data.apiHost}/budgets`, {
-                category_id: c.id,
-                budgeted_amount: 0,
-                month: month.id + 1,
-                year: year
-              });
-            }
-          }
-        }
-      }
-
       return budgets;
     }
   });
