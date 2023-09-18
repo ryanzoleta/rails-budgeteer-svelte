@@ -141,7 +141,7 @@
     {#if $categoriesQuery.data}
       {#each $categoriesQuery.data as c}
         <div class="group flex place-items-center gap-2">
-          <p>{c.id} {c.name}</p>
+          <p>{c.name}</p>
           <Button
             variant="ghost"
             size="icon"
