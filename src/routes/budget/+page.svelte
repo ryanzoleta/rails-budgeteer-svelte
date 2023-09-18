@@ -3,7 +3,7 @@
   import { Input } from '$lib/components/ui/input';
   import { Button } from '$lib/components/ui/button';
   import { generateMutation, monthsInAYear } from '$lib/utils';
-  import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
+  import { createQuery, useQueryClient } from '@tanstack/svelte-query';
   import axios from 'axios';
   import { defaultCategory, type Category } from '$lib/types.js';
   import * as Dialog from '$lib/components/ui/dialog';
