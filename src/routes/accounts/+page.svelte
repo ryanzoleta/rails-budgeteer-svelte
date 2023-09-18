@@ -6,6 +6,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Trash2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
+  import { generateMutation } from '$lib/utils.js';
 
   export let data;
 
@@ -120,7 +121,8 @@
     }
   });
 
-  const addAccountMutation = createMutation({
+  const addAccountMutation = generateMutation(client, {
+    queryKey: ['accounts'],
     mutationKey: ['add', 'account'],
     mutationFn: async (account: Account) => {
       loading = true;
@@ -130,11 +132,7 @@
       });
       loading = false;
     },
-    onMutate: async (account: Account) => {
-      await client.cancelQueries(['accounts']);
-
-      const accounts = client.getQueryData<Account[]>(['accounts']);
-
+    updateFn: (accounts: Account[], account: Account) => {
       accounts?.push({
         id: -1,
         name: account.name,
@@ -142,53 +140,29 @@
         created_at: new Date(),
         updated_at: new Date()
       });
-
-      client.setQueryData<Account[]>(['accounts'], []); // this forces a re-render
-      client.setQueryData<Account[]>(['accounts'], accounts);
-    },
-    onSettled: () => {
-      client.invalidateQueries(['accounts']);
+      return accounts;
     }
   });
 
-  const editAccountMutation = createMutation({
+  const editAccountMutation = generateMutation(client, {
+    queryKey: ['accounts'],
     mutationKey: ['edit', 'account'],
     mutationFn: async (account: Account) => {
       await axios.patch(`${data.apiHost}/accounts/${account.id}`, {
         name: account.name
       });
     },
-    onMutate: async () => {
-      await client.cancelQueries(['accounts']);
-
-      const accounts = client.getQueryData<Account[]>(['accounts']);
-
-      client.setQueryData<Account[]>(['accounts'], []); // this forces a re-render
-      client.setQueryData<Account[]>(['accounts'], accounts);
-    },
-    onSettled: () => {
-      client.invalidateQueries(['accounts']);
-    }
+    updateFn: (accounts: Account[]) => accounts
   });
 
-  const deleteAccountMutation = createMutation({
+  const deleteAccountMutation = generateMutation(client, {
+    queryKey: ['accounts'],
     mutationKey: ['delete', 'account'],
     mutationFn: async (account: Account) => {
       await axios.delete(`${data.apiHost}/accounts/${account.id}`);
     },
-    onMutate: async (account: Account) => {
-      await client.cancelQueries(['accounts']);
-
-      const currentAccounts = client.getQueryData<Account[]>(['accounts']);
-
-      const updatedAccounts = currentAccounts?.filter((a: Account) => a.id !== account.id);
-
-      client.setQueryData<Account[]>(['accounts'], []); // this forces a re-render
-      client.setQueryData<Account[]>(['accounts'], updatedAccounts);
-    },
-    onSettled: () => {
-      client.invalidateQueries(['accounts']);
-    }
+    updateFn: (accounts: Account[], account: Account) =>
+      accounts?.filter((a: Account) => a.id !== account.id)
   });
 </script>
 
