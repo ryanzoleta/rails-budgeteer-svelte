@@ -28,7 +28,8 @@
     },
     onSuccess: () => {
       client.invalidateQueries(['budgets']);
-    }
+    },
+    refetchOnWindowFocus: false
   });
 
   const addCategoryMutation = generateMutation(client, {
@@ -78,7 +79,8 @@
       const budgets = response.data as Budget[];
 
       return budgets;
-    }
+    },
+    refetchOnWindowFocus: false
   });
 
   $: if (year) client.invalidateQueries(['budgets']);
@@ -121,7 +123,9 @@
     <h3 class="font-bold text-zinc-400">Category</h3>
     <h3 class="text-right font-bold text-zinc-400">Budgeted</h3>
 
-    {#if $categoriesQuery.data && $budgetsQuery.data}
+    {#if $budgetsQuery.isLoading || $categoriesQuery.isLoading || $budgetsQuery.isRefetching}
+      <p>Loading...</p>
+    {:else if $categoriesQuery.data && $budgetsQuery.data}
       {#each $categoriesQuery.data as c}
         <div class="group flex place-items-center gap-2">
           <p>{c.name}</p>
@@ -138,7 +142,9 @@
         <Input
           type="number"
           class="text-right"
-          value={$budgetsQuery.data[0].budgeted_amount ?? 0} />
+          value={$budgetsQuery.data.find((b) => {
+            return b.year === year && b.month === monthIndex + 1 && b.category_id === c.id;
+          })?.budgeted_amount ?? 0} />
       {/each}
     {/if}
   </div>
