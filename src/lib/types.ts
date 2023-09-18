@@ -1,3 +1,5 @@
+import type { Moment } from 'moment';
+
 export type AccountType = {
   id: number;
   name: string;
@@ -16,6 +18,16 @@ export type Account = {
 export type Category = {
   id: number;
   name: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type Budget = {
+  id: number;
+  month: number;
+  year: number;
+  category_id: number;
+  budgeted_amount: number;
   created_at: Date;
   updated_at: Date;
 };

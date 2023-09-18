@@ -5,7 +5,7 @@
   import { generateMutation, monthsInAYear } from '$lib/utils';
   import { createQuery, useQueryClient } from '@tanstack/svelte-query';
   import axios from 'axios';
-  import { defaultCategory, type Category } from '$lib/types.js';
+  import { defaultCategory, type Category, type Budget } from '$lib/types.js';
   import * as Dialog from '$lib/components/ui/dialog';
 
   export let data;
@@ -18,15 +18,18 @@
 
   let category: Category = defaultCategory;
 
+  const client = useQueryClient();
+
   const categoriesQuery = createQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       const response = await axios.get(`${data.apiHost}/categories`);
       return response.data as Category[];
+    },
+    onSuccess: () => {
+      client.invalidateQueries(['budgets']);
     }
   });
-
-  const client = useQueryClient();
 
   const addCategoryMutation = generateMutation(client, {
     queryKey: ['categories'],
@@ -67,6 +70,35 @@
         return c;
       })
   });
+
+  const budgetsQuery = createQuery({
+    queryKey: ['budgets'],
+    queryFn: async () => {
+      const response = await axios.get(`${data.apiHost}/budgets`, { params: { year } });
+      const budgets = response.data as Budget[];
+
+      if ($categoriesQuery.data) {
+        for (const month of monthsInAYear) {
+          const monthBudget = budgets.find((b) => b.month === month.id + 1);
+
+          if (!monthBudget) {
+            for (const c of $categoriesQuery.data) {
+              await axios.post(`${data.apiHost}/budgets`, {
+                category_id: c.id,
+                budgeted_amount: 0,
+                month: month.id + 1,
+                year: year
+              });
+            }
+          }
+        }
+      }
+
+      return budgets;
+    }
+  });
+
+  $: if (year) client.invalidateQueries(['budgets']);
 </script>
 
 <div class="flex flex-col gap-5">
@@ -106,7 +138,7 @@
     <h3 class="font-bold text-zinc-400">Category</h3>
     <h3 class="text-right font-bold text-zinc-400">Budgeted</h3>
 
-    {#if $categoriesQuery.data}
+    {#if $categoriesQuery.data && $budgetsQuery.data}
       {#each $categoriesQuery.data as c}
         <div class="group flex place-items-center gap-2">
           <p>{c.name}</p>
@@ -120,7 +152,10 @@
             }}><Pencil /></Button>
         </div>
 
-        <Input type="number" value={0} class="text-right" />
+        <Input
+          type="number"
+          class="text-right"
+          value={$budgetsQuery.data[0].budgeted_amount ?? 0} />
       {/each}
     {/if}
   </div>
