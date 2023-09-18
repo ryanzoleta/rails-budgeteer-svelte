@@ -19,3 +19,10 @@ export type Category = {
   created_at: Date;
   updated_at: Date;
 };
+
+export const defaultCategory: Category = {
+  id: 0,
+  name: '',
+  created_at: new Date(),
+  updated_at: new Date()
+};

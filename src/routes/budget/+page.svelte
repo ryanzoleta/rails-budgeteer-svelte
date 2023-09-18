@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { ChevronLeft, ChevronRight, X } from 'lucide-svelte';
+  import { ChevronLeft, ChevronRight, Pencil } from 'lucide-svelte';
   import { Input } from '$lib/components/ui/input';
   import { Button } from '$lib/components/ui/button';
   import { monthsInAYear } from '$lib/utils';
   import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
   import axios from 'axios';
-  import type { Category } from '$lib/types.js';
+  import { defaultCategory, type Category } from '$lib/types.js';
   import * as Dialog from '$lib/components/ui/dialog';
 
   export let data;
@@ -14,13 +14,13 @@
   let monthIndex = 0;
 
   let dialogAddCategoryIsOpen = false;
+  let dialogEditCategoryIsOpen = false;
 
-  let category: Category = {
-    id: 0,
-    name: '',
-    created_at: new Date(),
-    updated_at: new Date()
-  };
+  let category: Category = defaultCategory;
+
+  $: {
+    if (!dialogEditCategoryIsOpen) category.name = '';
+  }
 
   const categoriesQuery = createQuery({
     queryKey: ['categories'],
@@ -51,6 +51,9 @@
 
       client.setQueryData<Category[]>(['categories'], []); // this forces a re-render
       client.setQueryData<Category[]>(['categories'], categories);
+    },
+    onSettled: () => {
+      client.invalidateQueries(['categories']);
     }
   });
 
@@ -59,7 +62,6 @@
     mutationFn: async (category: Category) => {
       await axios.delete(`${data.apiHost}/categories/${category.id}`);
     },
-
     onMutate: async (category: Category) => {
       await client.cancelQueries(['categories']);
 
@@ -70,6 +72,9 @@
         ['categories'],
         categories?.filter((c) => c.id !== category.id)
       );
+    },
+    onSettled: () => {
+      client.invalidateQueries(['categories']);
     }
   });
 </script>
@@ -112,16 +117,17 @@
     <h3 class="text-right font-bold text-zinc-400">Budgeted</h3>
 
     {#if $categoriesQuery.data}
-      {#each $categoriesQuery.data as category}
+      {#each $categoriesQuery.data as c}
         <div class="group flex place-items-center gap-2">
-          <p>{category.name}</p>
+          <p>{c.id} {c.name}</p>
           <Button
             variant="ghost"
             size="icon"
             class="h-8 w-8 rounded-full p-2 text-zinc-950 group-hover:text-zinc-50"
             on:click={() => {
-              $deleteCategoryMutation.mutate(category);
-            }}><X /></Button>
+              dialogEditCategoryIsOpen = true;
+              category = c;
+            }}><Pencil /></Button>
         </div>
 
         <Input type="number" value={0} class="text-right" />
@@ -148,15 +154,49 @@
           }}>
           <Input placeholder="Category Name" bind:value={category.name} required />
           <div class="flex place-content-end gap-2">
-            <Button variant="default">Add</Button>
             <Button
               variant="secondary"
               on:click={() => {
                 dialogAddCategoryIsOpen = false;
               }}>Cancel</Button>
+            <Button variant="default">Add</Button>
           </div>
         </form>
       </Dialog.Content>
     </Dialog.Root>
   </div>
 </div>
+
+<Dialog.Root bind:open={dialogEditCategoryIsOpen}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Edit Category</Dialog.Title>
+    </Dialog.Header>
+    <form
+      class="flex flex-col gap-5"
+      on:submit={() => {
+        $addCategoryMutation.mutate(structuredClone(category));
+        category.name = '';
+        dialogAddCategoryIsOpen = false;
+      }}>
+      <Input placeholder="Category Name" bind:value={category.name} required />
+      <div class="flex place-content-between">
+        <Button
+          variant="destructive"
+          on:click={() => {
+            $deleteCategoryMutation.mutate(category);
+            dialogEditCategoryIsOpen = false;
+          }}>Delete</Button>
+        <div class="flex gap-2">
+          <Button
+            variant="secondary"
+            on:click={() => {
+              dialogEditCategoryIsOpen = false;
+            }}>Cancel</Button>
+
+          <Button variant="default">Save</Button>
+        </div>
+      </div>
+    </form>
+  </Dialog.Content>
+</Dialog.Root>
