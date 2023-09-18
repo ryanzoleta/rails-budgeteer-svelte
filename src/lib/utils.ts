@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { cubicOut } from 'svelte/easing';
 import type { TransitionConfig } from 'svelte/transition';
+import { createMutation, type QueryClient } from '@tanstack/svelte-query';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -117,3 +118,31 @@ export const monthsInAYear = [
     abbr: 'DEC'
   }
 ];
+
+export function generateMutation<T>(
+  client: QueryClient,
+  options: {
+    queryKey: string[];
+    mutationKey: string[];
+    mutationFn: (params: T) => Promise<void>;
+    updateFn: (list: T[], item: T) => T[];
+  }
+) {
+  return createMutation({
+    mutationKey: options.mutationKey,
+    mutationFn: options.mutationFn,
+    onMutate: async (item: T) => {
+      await client.cancelQueries(options.queryKey);
+
+      const list = client.getQueryData<T[]>(options.queryKey) ?? [];
+
+      const updatedList = options.updateFn(list, item);
+
+      client.setQueryData<T[]>(options.queryKey, []); // this forces a re-render
+      client.setQueryData<T[]>(options.queryKey, updatedList);
+    },
+    onSettled: () => {
+      client.invalidateQueries(options.queryKey);
+    }
+  });
+}

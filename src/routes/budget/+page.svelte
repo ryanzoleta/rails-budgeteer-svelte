@@ -2,7 +2,7 @@
   import { ChevronLeft, ChevronRight, Pencil } from 'lucide-svelte';
   import { Input } from '$lib/components/ui/input';
   import { Button } from '$lib/components/ui/button';
-  import { monthsInAYear } from '$lib/utils';
+  import { generateMutation, monthsInAYear } from '$lib/utils';
   import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
   import axios from 'axios';
   import { defaultCategory, type Category } from '$lib/types.js';
@@ -28,76 +28,44 @@
 
   const client = useQueryClient();
 
-  const addCategoryMutation = createMutation({
+  const addCategoryMutation = generateMutation(client, {
+    queryKey: ['categories'],
     mutationKey: ['add', 'category'],
     mutationFn: async (category: Category) => {
       await axios.post(`${data.apiHost}/categories`, { name: category.name });
     },
-    onMutate: async (category: Category) => {
-      await client.cancelQueries(['categories']);
-
-      const categories = client.getQueryData<Category[]>(['categories']);
-
+    updateFn: (categories: Category[], item: Category) => {
       categories?.push({
         id: -1,
-        name: category.name,
+        name: item.name,
         created_at: new Date(),
         updated_at: new Date()
       });
-
-      client.setQueryData<Category[]>(['categories'], []); // this forces a re-render
-      client.setQueryData<Category[]>(['categories'], categories);
-    },
-    onSettled: () => {
-      client.invalidateQueries(['categories']);
+      return categories;
     }
   });
 
-  const deleteCategoryMutation = createMutation({
+  const deleteCategoryMutation = generateMutation(client, {
+    queryKey: ['categories'],
     mutationKey: ['delete', 'category'],
     mutationFn: async (category: Category) => {
       await axios.delete(`${data.apiHost}/categories/${category.id}`);
     },
-    onMutate: async (category: Category) => {
-      await client.cancelQueries(['categories']);
-
-      const categories = client.getQueryData<Category[]>(['categories']);
-
-      client.setQueryData<Category[]>(['categories'], []); // this forces a re-render
-      client.setQueryData<Category[]>(
-        ['categories'],
-        categories?.filter((c) => c.id !== category.id)
-      );
-    },
-    onSettled: () => {
-      client.invalidateQueries(['categories']);
-    }
+    updateFn: (categories: Category[], category: Category) =>
+      categories?.filter((c) => c.id !== category.id)
   });
 
-  const editCategoryMutation = createMutation({
+  const editCategoryMutation = generateMutation(client, {
+    queryKey: ['categories'],
     mutationKey: ['edit', 'category'],
     mutationFn: async (category: Category) => {
       await axios.patch(`${data.apiHost}/categories/${category.id}`, { name: category.name });
     },
-    onMutate: async (category: Category) => {
-      await client.cancelQueries(['categories']);
-
-      const categories = client.getQueryData<Category[]>(['categories']) ?? [];
-
-      client.setQueryData<Category[]>(['categories'], []); // this forces a re-render
-      client.setQueryData<Category[]>(
-        ['categories'],
-        categories.map((c) => {
-          if (c.id === category.id) {
-            c.name = category.name;
-          }
-          return c;
-        })
-      );
-    },
-    onSettled: () => {
-      client.invalidateQueries(['categories']);
-    }
+    updateFn: (categories: Category[], category: Category) =>
+      categories.map((c) => {
+        c.name = c.id === category.id ? category.name : c.name;
+        return c;
+      })
   });
 </script>
 
