@@ -84,6 +84,19 @@
   });
 
   $: if (year) client.invalidateQueries(['budgets']);
+
+  const editBudgetMutation = generateMutation(client, {
+    queryKey: ['budgets'],
+    mutationKey: ['edit', 'budget'],
+    mutationFn: async (budget: Budget) => {
+      await axios.patch(`${data.apiHost}/budgets/${budget.id}`, {
+        budgeted_amount: budget.budgeted_amount
+      });
+    },
+    updateFn: (budgets: Budget[]) => {
+      return budgets;
+    }
+  });
 </script>
 
 <div class="flex flex-col gap-5">
@@ -123,7 +136,7 @@
     <h3 class="font-bold text-zinc-400">Category</h3>
     <h3 class="text-right font-bold text-zinc-400">Budgeted</h3>
 
-    {#if $budgetsQuery.isLoading || $categoriesQuery.isLoading || $budgetsQuery.isRefetching}
+    {#if $budgetsQuery.isLoading || $categoriesQuery.isLoading}
       <p>Loading...</p>
     {:else if $categoriesQuery.data && $budgetsQuery.data}
       {#each $categoriesQuery.data as c}
@@ -139,12 +152,17 @@
             }}><Pencil /></Button>
         </div>
 
-        <Input
-          type="number"
-          class="text-right"
-          value={$budgetsQuery.data.find((b) => {
-            return b.year === year && b.month === monthIndex + 1 && b.category_id === c.id;
-          })?.budgeted_amount ?? 0} />
+        {#each $budgetsQuery.data.filter((b) => {
+          return b.year === year && b.month === monthIndex + 1 && b.category_id === c.id;
+        }) as budget}
+          <Input
+            type="number"
+            class="text-right"
+            bind:value={budget.budgeted_amount}
+            on:blur={() => {
+              $editBudgetMutation.mutate(budget);
+            }} />
+        {/each}
       {/each}
     {/if}
   </div>
