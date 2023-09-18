@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChevronLeft, ChevronRight } from 'lucide-svelte';
+  import { ChevronLeft, ChevronRight, X } from 'lucide-svelte';
   import { Input } from '$lib/components/ui/input';
   import { Button } from '$lib/components/ui/button';
   import { monthsInAYear } from '$lib/utils';
@@ -53,6 +53,25 @@
       client.setQueryData<Category[]>(['categories'], categories);
     }
   });
+
+  const deleteCategoryMutation = createMutation({
+    mutationKey: ['delete', 'category'],
+    mutationFn: async (category: Category) => {
+      await axios.delete(`${data.apiHost}/categories/${category.id}`);
+    },
+
+    onMutate: async (category: Category) => {
+      await client.cancelQueries(['categories']);
+
+      const categories = client.getQueryData<Category[]>(['categories']);
+
+      client.setQueryData<Category[]>(['categories'], []); // this forces a re-render
+      client.setQueryData<Category[]>(
+        ['categories'],
+        categories?.filter((c) => c.id !== category.id)
+      );
+    }
+  });
 </script>
 
 <div class="flex flex-col gap-5">
@@ -94,7 +113,16 @@
 
     {#if $categoriesQuery.data}
       {#each $categoriesQuery.data as category}
-        <p>{category.name}</p>
+        <div class="group flex place-items-center gap-2">
+          <p>{category.name}</p>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-8 w-8 rounded-full p-2 text-zinc-950 group-hover:text-zinc-50"
+            on:click={() => {
+              $deleteCategoryMutation.mutate(category);
+            }}><X /></Button>
+        </div>
 
         <Input type="number" value={0} class="text-right" />
       {/each}
