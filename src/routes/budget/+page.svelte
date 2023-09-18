@@ -18,10 +18,6 @@
 
   let category: Category = defaultCategory;
 
-  $: {
-    if (!dialogEditCategoryIsOpen) category.name = '';
-  }
-
   const categoriesQuery = createQuery({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -71,6 +67,32 @@
       client.setQueryData<Category[]>(
         ['categories'],
         categories?.filter((c) => c.id !== category.id)
+      );
+    },
+    onSettled: () => {
+      client.invalidateQueries(['categories']);
+    }
+  });
+
+  const editCategoryMutation = createMutation({
+    mutationKey: ['edit', 'category'],
+    mutationFn: async (category: Category) => {
+      await axios.patch(`${data.apiHost}/categories/${category.id}`, { name: category.name });
+    },
+    onMutate: async (category: Category) => {
+      await client.cancelQueries(['categories']);
+
+      const categories = client.getQueryData<Category[]>(['categories']) ?? [];
+
+      client.setQueryData<Category[]>(['categories'], []); // this forces a re-render
+      client.setQueryData<Category[]>(
+        ['categories'],
+        categories.map((c) => {
+          if (c.id === category.id) {
+            c.name = category.name;
+          }
+          return c;
+        })
       );
     },
     onSettled: () => {
@@ -138,7 +160,10 @@
   <div>
     <Dialog.Root bind:open={dialogAddCategoryIsOpen}>
       <Dialog.Trigger>
-        <Button>Add Category</Button>
+        <Button
+          on:click={() => {
+            category = defaultCategory;
+          }}>Add Category</Button>
       </Dialog.Trigger>
       <Dialog.Content>
         <Dialog.Header>
@@ -150,7 +175,6 @@
           on:submit={() => {
             $addCategoryMutation.mutate(structuredClone(category));
             category.name = '';
-            dialogAddCategoryIsOpen = false;
           }}>
           <Input placeholder="Category Name" bind:value={category.name} required />
           <div class="flex place-content-end gap-2">
@@ -159,7 +183,7 @@
               on:click={() => {
                 dialogAddCategoryIsOpen = false;
               }}>Cancel</Button>
-            <Button variant="default">Add</Button>
+            <Button type="submit" variant="default">Add</Button>
           </div>
         </form>
       </Dialog.Content>
@@ -175,28 +199,30 @@
     <form
       class="flex flex-col gap-5"
       on:submit={() => {
-        $addCategoryMutation.mutate(structuredClone(category));
-        category.name = '';
-        dialogAddCategoryIsOpen = false;
+        $editCategoryMutation.mutate(category);
+        dialogEditCategoryIsOpen = false;
       }}>
       <Input placeholder="Category Name" bind:value={category.name} required />
-      <div class="flex place-content-between">
-        <Button
-          variant="destructive"
-          on:click={() => {
-            $deleteCategoryMutation.mutate(category);
-            dialogEditCategoryIsOpen = false;
-          }}>Delete</Button>
-        <div class="flex gap-2">
-          <Button
-            variant="secondary"
-            on:click={() => {
-              dialogEditCategoryIsOpen = false;
-            }}>Cancel</Button>
-
-          <Button variant="default">Save</Button>
-        </div>
-      </div>
     </form>
+    <div class="flex place-content-between">
+      <Button
+        variant="destructive"
+        on:click={(e) => {
+          e.preventDefault();
+          console.log('delete triggered');
+          $deleteCategoryMutation.mutate(category);
+          dialogEditCategoryIsOpen = false;
+        }}>Delete</Button>
+      <div class="flex gap-2">
+        <Button
+          variant="secondary"
+          on:click={(e) => {
+            e.preventDefault();
+            dialogEditCategoryIsOpen = false;
+          }}>Cancel</Button>
+
+        <Button variant="default">Save</Button>
+      </div>
+    </div>
   </Dialog.Content>
 </Dialog.Root>
