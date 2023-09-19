@@ -111,6 +111,12 @@
     <div class="flex place-content-center"><Loader2 class="animate-spin" /></div>
   {:else if $categoriesQuery.data && $accountsQuery.data}
     <div class="inline-grid auto-cols-auto grid-cols-[auto_auto_auto_auto_auto] items-center">
+      <p class="border-b border-zinc-400 font-bold text-zinc-400">Date</p>
+      <p class="border-b border-zinc-400 font-bold text-zinc-400">Account</p>
+      <p class="border-b border-zinc-400 font-bold text-zinc-400">Category</p>
+      <p class="border-b border-zinc-400 font-bold text-zinc-400">Amount</p>
+      <p class="border-b border-zinc-400 font-bold text-zinc-400">Edit</p>
+
       {#if $transactionsQuery.data}
         {#each $transactionsQuery.data as t}
           <div>
@@ -125,7 +131,7 @@
           <div>
             {t.amount ?? 0}
           </div>
-          <div>
+          <div class="flex place-content-end">
             <Button
               size="icon"
               variant="ghost"
