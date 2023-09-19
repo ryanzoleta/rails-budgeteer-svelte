@@ -184,17 +184,25 @@
             on:submit={() => {
               $addCategoryMutation.mutate(structuredClone(category));
               category.name = '';
+              dialogAddCategoryIsOpen = false;
             }}>
             <Input placeholder="Category Name" bind:value={category.name} required />
-            <div class="flex place-content-end gap-2">
-              <Button
-                variant="secondary"
-                on:click={() => {
-                  dialogAddCategoryIsOpen = false;
-                }}>Cancel</Button>
-              <Button type="submit" variant="default">Add</Button>
-            </div>
           </form>
+          <div class="flex place-content-end gap-2">
+            <Button
+              variant="secondary"
+              on:click={() => {
+                dialogAddCategoryIsOpen = false;
+              }}>Cancel</Button>
+            <Button
+              type="submit"
+              variant="default"
+              on:click={() => {
+                $addCategoryMutation.mutate(structuredClone(category));
+                category.name = '';
+                dialogAddCategoryIsOpen = false;
+              }}>Add</Button>
+          </div>
         </Dialog.Content>
       </Dialog.Root>
     </div>
