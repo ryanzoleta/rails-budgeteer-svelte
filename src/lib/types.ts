@@ -32,6 +32,18 @@ export type Budget = {
   updated_at: Date;
 };
 
+export type Transaction = {
+  id: number;
+  date: string;
+  account_id: number;
+  amount: number;
+  category_id: number;
+  created_at: Date;
+  updated_at: Date;
+  account?: Account;
+  category?: Category;
+};
+
 export const defaultCategory: Category = {
   id: 0,
   name: '',
