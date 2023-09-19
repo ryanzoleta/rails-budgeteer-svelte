@@ -1,26 +1,19 @@
 <script lang="ts">
   import Button from '$lib/components/ui/button/button.svelte';
   import * as Dialog from '$lib/components/ui/dialog';
-  import type { Account, Category, Transaction } from '$lib/types';
+  import { defaultTransaction, type Account, type Category, type Transaction } from '$lib/types';
   import { Input } from '$lib/components/ui/input';
   import Label from '$lib/components/ui/label/label.svelte';
   import { createQuery, useQueryClient } from '@tanstack/svelte-query';
   import axios from 'axios';
   import { formatDate, generateMutation } from '$lib/utils.js';
+  import { Pencil } from 'lucide-svelte';
 
   export let data;
 
-  let dialogAddTransactionIsOpen = false;
+  let dialogOpen = false;
 
-  let transaction: Transaction = {
-    id: 0,
-    date: formatDate(new Date()),
-    account_id: 0,
-    amount: 0,
-    category_id: 0,
-    created_at: new Date(),
-    updated_at: new Date()
-  };
+  let transaction: Transaction = defaultTransaction;
 
   const client = useQueryClient();
 
@@ -47,6 +40,25 @@
     updateFn: (transactions: Transaction[], transaction: Transaction) => {
       transactions.push(transaction);
       return transactions;
+    }
+  });
+
+  const editTransactionMutation = generateMutation(client, {
+    queryKey: ['transactions'],
+    mutationKey: ['edit', 'transaction'],
+    mutationFn: async (transaction: Transaction) => {
+      await axios.patch(`${data.apiHost}/transactions/${transaction.id}`, {
+        date: transaction.date,
+        category_id: transaction.category_id,
+        account_id: transaction.account_id,
+        amount: transaction.amount
+      });
+    },
+    updateFn: (transactions: Transaction[], transaction: Transaction) => {
+      transaction.account = $accountsQuery.data?.find((a) => a.id === transaction.account_id);
+      transaction.category = $categoriesQuery.data?.find((c) => c.id === transaction.category_id);
+
+      return transactions.map((t) => (t.id === transaction.id ? transaction : t));
     }
   });
 
@@ -77,40 +89,55 @@
       <Button
         class="h-fit"
         on:click={() => {
-          dialogAddTransactionIsOpen = true;
+          dialogOpen = true;
+          transaction = defaultTransaction;
         }}>Add</Button>
     </div>
 
-    <div class="inline-grid auto-cols-auto grid-cols-[1fr_1fr_1fr_1fr]">
+    <div class="inline-grid auto-cols-auto grid-cols-[auto_auto_auto_auto_auto] items-center">
       {#if $transactionsQuery.data}
-        {#each $transactionsQuery.data as transaction}
+        {#each $transactionsQuery.data as t}
           <div>
-            {transaction.date}
+            {t.date}
           </div>
           <div>
-            {transaction.account?.name}
+            {t.account?.name}
           </div>
           <div>
-            {transaction.category?.name}
+            {t.category?.name}
           </div>
           <div>
-            {transaction.amount ?? 0}
+            {t.amount ?? 0}
+          </div>
+          <div>
+            <Button
+              size="icon"
+              variant="ghost"
+              class="h-8 w-8 rounded-full p-2"
+              on:click={() => {
+                dialogOpen = true;
+                transaction = t;
+              }}><Pencil /></Button>
           </div>
         {/each}
       {/if}
     </div>
   </div>
 
-  <Dialog.Root bind:open={dialogAddTransactionIsOpen}>
+  <Dialog.Root bind:open={dialogOpen}>
     <Dialog.Content>
       <Dialog.Header>
-        <Dialog.Title>Add Transaction</Dialog.Title>
+        <Dialog.Title>{transaction.id === 0 ? 'Add' : 'Edit'} Transaction</Dialog.Title>
       </Dialog.Header>
       <form
         class="flex flex-col gap-3"
         on:submit={() => {
-          $addTransactionMutation.mutate(transaction);
-          dialogAddTransactionIsOpen = false;
+          if (transaction.id === 0) {
+            $addTransactionMutation.mutate(transaction);
+          } else {
+            $editTransactionMutation.mutate(transaction);
+          }
+          dialogOpen = false;
         }}>
         <div class="flex flex-col gap-2">
           <Label class="text-zinc-400">Date</Label>
@@ -153,15 +180,24 @@
           variant="secondary"
           on:click={(e) => {
             e.preventDefault();
-            dialogAddTransactionIsOpen = false;
+            dialogOpen = false;
           }}>Cancel</Button>
 
-        <Button
-          variant="default"
-          on:click={() => {
-            $addTransactionMutation.mutate(transaction);
-            dialogAddTransactionIsOpen = false;
-          }}>Add</Button>
+        {#if transaction.id === 0}
+          <Button
+            variant="default"
+            on:click={() => {
+              $addTransactionMutation.mutate(transaction);
+              dialogOpen = false;
+            }}>Add</Button>
+        {:else}
+          <Button
+            variant="default"
+            on:click={() => {
+              $editTransactionMutation.mutate(transaction);
+              dialogOpen = false;
+            }}>Save</Button>
+        {/if}
       </div>
     </Dialog.Content>
   </Dialog.Root>

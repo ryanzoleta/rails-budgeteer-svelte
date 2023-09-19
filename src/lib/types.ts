@@ -1,4 +1,5 @@
 import type { Moment } from 'moment';
+import { formatDate } from './utils';
 
 export type AccountType = {
   id: number;
@@ -47,6 +48,16 @@ export type Transaction = {
 export const defaultCategory: Category = {
   id: 0,
   name: '',
+  created_at: new Date(),
+  updated_at: new Date()
+};
+
+export const defaultTransaction: Transaction = {
+  id: 0,
+  date: formatDate(new Date()),
+  account_id: 0,
+  amount: 0,
+  category_id: 0,
   created_at: new Date(),
   updated_at: new Date()
 };
