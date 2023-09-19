@@ -6,7 +6,7 @@
   import Label from '$lib/components/ui/label/label.svelte';
   import { createQuery, useQueryClient } from '@tanstack/svelte-query';
   import axios from 'axios';
-  import { generateMutation } from '$lib/utils.js';
+  import { formatAmountToCurrency, generateMutation } from '$lib/utils.js';
   import { Loader2, Pencil } from 'lucide-svelte';
   import moment from 'moment';
 
@@ -115,7 +115,7 @@
       <p class="border-b border-zinc-400 font-bold text-zinc-400">Account</p>
       <p class="border-b border-zinc-400 font-bold text-zinc-400">Category</p>
       <p class="border-b border-zinc-400 font-bold text-zinc-400">Amount</p>
-      <p class="border-b border-zinc-400 font-bold text-zinc-400">Edit</p>
+      <p class="border-b border-zinc-400 text-center font-bold text-zinc-400">Edit</p>
 
       {#if $transactionsQuery.data}
         {#each $transactionsQuery.data as t}
@@ -129,9 +129,9 @@
             {t.category?.name}
           </div>
           <div>
-            {t.amount ?? 0}
+            {formatAmountToCurrency(t.amount ?? 0)}
           </div>
-          <div class="flex place-content-end">
+          <div class="flex place-content-center">
             <Button
               size="icon"
               variant="ghost"

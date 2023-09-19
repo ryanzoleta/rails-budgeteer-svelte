@@ -154,3 +154,13 @@ export function formatDate(date: Date) {
 
   return `${year}-${month}-${day}`;
 }
+
+export function formatAmountToCurrency(amount: number): string {
+  const userLang = navigator.language ?? 'en-US';
+  const currencyNumber = new Intl.NumberFormat(userLang, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+
+  return `$ ${currencyNumber}`;
+}
