@@ -62,6 +62,16 @@
     }
   });
 
+  const deleteTransactionMutation = generateMutation(client, {
+    queryKey: ['transactions'],
+    mutationKey: ['delete', 'transaction'],
+    mutationFn: async (transaction: Transaction) => {
+      await axios.delete(`${data.apiHost}/transactions/${transaction.id}`);
+    },
+    updateFn: (transactions: Transaction[], transaction: Transaction) =>
+      transactions.filter((t) => t.id !== transaction.id)
+  });
+
   const categoriesQuery = createQuery({
     queryKey: ['categories'],
     queryFn: async () => {
@@ -175,29 +185,41 @@
           <Input type="number" placeholder="Account" bind:value={transaction.amount} required />
         </div>
       </form>
-      <div class="flex place-content-end gap-2">
-        <Button
-          variant="secondary"
-          on:click={(e) => {
-            e.preventDefault();
-            dialogOpen = false;
-          }}>Cancel</Button>
-
-        {#if transaction.id === 0}
+      <div class="flex place-content-between">
+        {#if transaction.id !== 0}
           <Button
-            variant="default"
-            on:click={() => {
-              $addTransactionMutation.mutate(transaction);
+            variant="destructive"
+            on:click={(e) => {
+              e.preventDefault();
+              $deleteTransactionMutation.mutate(transaction);
               dialogOpen = false;
-            }}>Add</Button>
-        {:else}
-          <Button
-            variant="default"
-            on:click={() => {
-              $editTransactionMutation.mutate(transaction);
-              dialogOpen = false;
-            }}>Save</Button>
+            }}>Delete</Button>
         {/if}
+
+        <div class="flex place-content-end gap-2">
+          <Button
+            variant="secondary"
+            on:click={(e) => {
+              e.preventDefault();
+              dialogOpen = false;
+            }}>Cancel</Button>
+
+          {#if transaction.id === 0}
+            <Button
+              variant="default"
+              on:click={() => {
+                $addTransactionMutation.mutate(transaction);
+                dialogOpen = false;
+              }}>Add</Button>
+          {:else}
+            <Button
+              variant="default"
+              on:click={() => {
+                $editTransactionMutation.mutate(transaction);
+                dialogOpen = false;
+              }}>Save</Button>
+          {/if}
+        </div>
       </div>
     </Dialog.Content>
   </Dialog.Root>
