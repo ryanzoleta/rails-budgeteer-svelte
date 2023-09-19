@@ -6,12 +6,13 @@
   import Label from '$lib/components/ui/label/label.svelte';
   import { createQuery, useQueryClient } from '@tanstack/svelte-query';
   import axios from 'axios';
-  import { formatDate, generateMutation } from '$lib/utils.js';
+  import { generateMutation } from '$lib/utils.js';
   import { Pencil } from 'lucide-svelte';
 
   export let data;
 
   let dialogOpen = false;
+  let errorMessage = '';
 
   let transaction: Transaction = defaultTransaction;
 
@@ -142,12 +143,17 @@
       <form
         class="flex flex-col gap-3"
         on:submit={() => {
-          if (transaction.id === 0) {
-            $addTransactionMutation.mutate(transaction);
+          if (transaction.account_id === 0 || transaction.category_id === 0) {
+            errorMessage = 'Provide Account and Category';
           } else {
-            $editTransactionMutation.mutate(transaction);
+            errorMessage = '';
+            if (transaction.id === 0) {
+              $addTransactionMutation.mutate(transaction);
+            } else {
+              $editTransactionMutation.mutate(transaction);
+            }
+            dialogOpen = false;
           }
-          dialogOpen = false;
         }}>
         <div class="flex flex-col gap-2">
           <Label class="text-zinc-400">Date</Label>
@@ -184,6 +190,10 @@
           <Label class="text-zinc-400">Account</Label>
           <Input type="number" placeholder="Account" bind:value={transaction.amount} required />
         </div>
+
+        {#if errorMessage}
+          <p class="text-red-500">{errorMessage}</p>
+        {/if}
       </form>
       <div class="flex place-content-between">
         {#if transaction.id !== 0}
@@ -208,15 +218,25 @@
             <Button
               variant="default"
               on:click={() => {
-                $addTransactionMutation.mutate(transaction);
-                dialogOpen = false;
+                if (transaction.account_id === 0 || transaction.category_id === 0) {
+                  errorMessage = 'Provide Account and Category';
+                } else {
+                  errorMessage = '';
+                  $addTransactionMutation.mutate(transaction);
+                  dialogOpen = false;
+                }
               }}>Add</Button>
           {:else}
             <Button
               variant="default"
               on:click={() => {
-                $editTransactionMutation.mutate(transaction);
-                dialogOpen = false;
+                if (transaction.account_id === 0 || transaction.category_id === 0) {
+                  errorMessage = 'Provide Account and Category';
+                } else {
+                  errorMessage = '';
+                  $editTransactionMutation.mutate(transaction);
+                  dialogOpen = false;
+                }
               }}>Save</Button>
           {/if}
         </div>
