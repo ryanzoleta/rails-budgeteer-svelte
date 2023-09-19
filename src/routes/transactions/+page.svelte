@@ -8,6 +8,7 @@
   import axios from 'axios';
   import { generateMutation } from '$lib/utils.js';
   import { Pencil } from 'lucide-svelte';
+  import moment from 'moment';
 
   export let data;
 
@@ -39,6 +40,8 @@
       });
     },
     updateFn: (transactions: Transaction[], transaction: Transaction) => {
+      transaction.account = $accountsQuery.data?.find((a) => a.id === transaction.account_id);
+      transaction.category = $categoriesQuery.data?.find((c) => c.id === transaction.category_id);
       transactions.push(transaction);
       return transactions;
     }
@@ -109,7 +112,7 @@
       {#if $transactionsQuery.data}
         {#each $transactionsQuery.data as t}
           <div>
-            {t.date}
+            {moment(t.date).format('MMM DD')}
           </div>
           <div>
             {t.account?.name}
