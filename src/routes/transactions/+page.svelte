@@ -7,7 +7,7 @@
   import { createQuery, useQueryClient } from '@tanstack/svelte-query';
   import axios from 'axios';
   import { generateMutation } from '$lib/utils.js';
-  import { Pencil } from 'lucide-svelte';
+  import { Loader2, Pencil } from 'lucide-svelte';
   import moment from 'moment';
 
   export let data;
@@ -96,18 +96,20 @@
   $transactionsQuery;
 </script>
 
-{#if $categoriesQuery.data && $accountsQuery.data}
-  <div class="flex flex-col gap-5">
-    <div class="flex place-content-between place-items-center">
-      <h1 class="text-xl font-bold">Transactions</h1>
-      <Button
-        class="h-fit"
-        on:click={() => {
-          dialogOpen = true;
-          transaction = defaultTransaction;
-        }}>Add</Button>
-    </div>
+<div class="flex flex-col gap-5">
+  <div class="flex place-content-between place-items-center">
+    <h1 class="text-xl font-bold">Transactions</h1>
+    <Button
+      class="h-fit"
+      on:click={() => {
+        dialogOpen = true;
+        transaction = defaultTransaction;
+      }}>Add</Button>
+  </div>
 
+  {#if $transactionsQuery.isLoading}
+    <div class="flex place-content-center"><Loader2 class="animate-spin" /></div>
+  {:else if $categoriesQuery.data && $accountsQuery.data}
     <div class="inline-grid auto-cols-auto grid-cols-[auto_auto_auto_auto_auto] items-center">
       {#if $transactionsQuery.data}
         {#each $transactionsQuery.data as t}
@@ -136,8 +138,10 @@
         {/each}
       {/if}
     </div>
-  </div>
+  {/if}
+</div>
 
+{#if $categoriesQuery.data && $accountsQuery.data}
   <Dialog.Root bind:open={dialogOpen}>
     <Dialog.Content>
       <Dialog.Header>

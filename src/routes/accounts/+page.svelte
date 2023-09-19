@@ -4,7 +4,7 @@
   import axios from 'axios';
   import { Input } from '$lib/components/ui/input';
   import { Button } from '$lib/components/ui/button';
-  import { Trash2 } from 'lucide-svelte';
+  import { Loader2, Trash2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { generateMutation } from '$lib/utils.js';
 
@@ -190,9 +190,10 @@
       </select>
       <Button variant="default" disabled={loading}>Add</Button>
     </form>
-
-    <div class="flex flex-col gap-3">
-      {#if $accountQuery.data}
+    {#if $accountQuery.isLoading}
+      <div class="flex place-content-center"><Loader2 class="animate-spin" /></div>
+    {:else if $accountQuery.data}
+      <div class="flex flex-col gap-3">
         {#each $accountQuery.data as account}
           {#if editingAccountId === account.id}
             <form
@@ -230,8 +231,8 @@
             </button>
           {/if}
         {/each}
-      {/if}
-    </div>
+      </div>
+    {/if}
   </div>
 
   <div class="flex flex-col gap-3">
@@ -246,46 +247,47 @@
       <Button variant="default" disabled={loading}>Add</Button>
     </form>
 
-    <div class="flex flex-col gap-3">
-      {#if $accountTypesQuery.data}
-        {#each $accountTypesQuery.data as accountType}
-          {#if editingAccountTypeId === accountType.id}
-            <form
-              on:submit={() => {
+    {#if $accountTypesQuery.isLoading}
+      <div class="flex place-content-center"><Loader2 class="animate-spin" /></div>
+    {:else if $accountTypesQuery.data}
+      <div class="flex flex-col gap-3" />
+      {#each $accountTypesQuery.data as accountType}
+        {#if editingAccountTypeId === accountType.id}
+          <form
+            on:submit={() => {
+              $editAccountTypeMutation.mutate(accountType);
+              editingAccountTypeId = 0;
+            }}
+            class="flex flex-1 gap-3 border-2 border-zinc-950 py-2">
+            <Input
+              bind:value={accountType.name}
+              on:blur={() => {
                 $editAccountTypeMutation.mutate(accountType);
-                editingAccountTypeId = 0;
               }}
-              class="flex flex-1 gap-3 border-2 border-zinc-950 py-2">
-              <Input
-                bind:value={accountType.name}
-                on:blur={() => {
-                  $editAccountTypeMutation.mutate(accountType);
-                }}
-                class="text-base"
-                autofocus />
+              class="text-base"
+              autofocus />
 
-              <Button variant="secondary">Save</Button>
-            </form>
-          {:else}
-            <button
-              class="flex place-content-between place-items-center gap-2 rounded-md border-2 border-green-950 px-5 py-2"
-              on:click|stopPropagation={() => {
-                editingAccountTypeId = accountType.id;
-              }}>
-              <p>{accountType.name}</p>
+            <Button variant="secondary">Save</Button>
+          </form>
+        {:else}
+          <button
+            class="flex place-content-between place-items-center gap-2 rounded-md border-2 border-green-950 px-5 py-2"
+            on:click|stopPropagation={() => {
+              editingAccountTypeId = accountType.id;
+            }}>
+            <p>{accountType.name}</p>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                class="group hover:bg-destructive"
-                on:click={(e) => {
-                  e.stopPropagation();
-                  $deleteAccountTypeMutation.mutate(accountType);
-                }}><Trash2 class="h-5 w-5 text-zinc-500 group-hover:text-red-300" /></Button>
-            </button>
-          {/if}
-        {/each}
-      {/if}
-    </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="group hover:bg-destructive"
+              on:click={(e) => {
+                e.stopPropagation();
+                $deleteAccountTypeMutation.mutate(accountType);
+              }}><Trash2 class="h-5 w-5 text-zinc-500 group-hover:text-red-300" /></Button>
+          </button>
+        {/if}
+      {/each}
+    {/if}
   </div>
 </div>
