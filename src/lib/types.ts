@@ -31,6 +31,7 @@ export type Budget = {
   budgeted_amount: number;
   created_at: Date;
   updated_at: Date;
+  sum?: number;
 };
 
 export type Transaction = {
