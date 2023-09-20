@@ -106,6 +106,14 @@
       editingBudgetId = 0;
     });
   });
+
+  function totalBudgeted(budgets: Budget[]) {
+    return budgets.reduce((total, b) => total + b.budgeted_amount, 0);
+  }
+
+  function totalSpent(budgets: Budget[]) {
+    return budgets.reduce((total, b) => total + (b.sum ?? 0), 0);
+  }
 </script>
 
 <div class="flex flex-col gap-5">
@@ -144,7 +152,7 @@
   {#if $budgetsQuery.isLoading || $categoriesQuery.isLoading}
     <div class="flex place-content-center"><Loader2 class="animate-spin" /></div>
   {:else if $categoriesQuery.data && $budgetsQuery.data}
-    <div class="inline-grid w-full auto-cols-auto grid-cols-[auto_1fr_1fr] items-center gap-2">
+    <div class="inline-grid w-full auto-cols-auto grid-cols-[auto_1fr_1fr] items-center gap-y-2">
       <h3 class="font-bold text-zinc-400">Category</h3>
       <h3 class="text-right font-bold text-zinc-400">Budgeted</h3>
       <h3 class="text-right font-bold text-zinc-400">Spent</h3>
@@ -170,6 +178,12 @@
               type="number"
               class="h-8 rounded-md border border-zinc-800 bg-background px-3 py-0 text-right text-base"
               bind:value={budget.budgeted_amount}
+              on:keypress={(e) => {
+                if (e.key === 'Enter') {
+                  //@ts-ignore
+                  e.target.blur();
+                }
+              }}
               on:blur={() => {
                 $editBudgetMutation.mutate(budget);
                 editingBudgetId = 0;
@@ -186,6 +200,14 @@
           <p class="text-right">{formatAmountToCurrency(budget.sum ?? 0)}</p>
         {/each}
       {/each}
+
+      <p class="border-t border-zinc-800 text-lg font-bold">Total</p>
+      <p class="border-t border-zinc-800 text-right text-lg font-bold">
+        {formatAmountToCurrency(totalBudgeted($budgetsQuery.data))}
+      </p>
+      <p class="border-t border-zinc-800 text-right text-lg font-bold">
+        {formatAmountToCurrency(totalSpent($budgetsQuery.data))}
+      </p>
     </div>
 
     <div class="flex place-content-end">
