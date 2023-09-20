@@ -8,11 +8,12 @@
   import { defaultCategory, type Category, type Budget } from '$lib/types.js';
   import * as Dialog from '$lib/components/ui/dialog';
   import { onMount } from 'svelte';
+  import moment from 'moment';
 
   export let data;
 
-  let year = 2023;
-  let monthIndex = 0;
+  let year = moment().year();
+  let monthIndex = moment().month();
 
   let dialogAddCategoryIsOpen = false;
   let dialogEditCategoryIsOpen = false;
