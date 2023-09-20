@@ -14,6 +14,7 @@ export type Account = {
   created_at: Date;
   updated_at: Date;
   balance?: number;
+  account_type?: AccountType;
 };
 
 export type Category = {

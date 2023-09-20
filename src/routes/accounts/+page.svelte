@@ -214,12 +214,15 @@
             </form>
           {:else}
             <button
-              class="flex place-content-between place-items-center gap-2 rounded-md bg-green-950 px-5 py-2"
+              class="flex place-content-between place-items-center gap-2 rounded-md bg-zinc-900 px-5 py-3"
               on:click|stopPropagation={() => {
                 editingAccountId = account.id;
               }}>
               <div class="grid flex-1 grid-cols-[1fr_1fr] place-items-start">
-                <p>{account.name}</p>
+                <div class="flex flex-col place-items-start">
+                  <p class="font-bold">{account.name}</p>
+                  <p class="text-sm text-zinc-500">{account.account_type?.name}</p>
+                </div>
                 <p>{formatAmountToCurrency(account.balance ?? 0)}</p>
               </div>
 
@@ -274,7 +277,7 @@
           </form>
         {:else}
           <button
-            class="flex place-content-between place-items-center gap-2 rounded-md border-2 border-green-950 px-5 py-2"
+            class="flex place-content-between place-items-center gap-2 rounded-md border-2 border-zinc-800 px-5 py-2"
             on:click|stopPropagation={() => {
               editingAccountTypeId = accountType.id;
             }}>
