@@ -9,6 +9,7 @@
   import { formatAmountToCurrency, generateMutation } from '$lib/utils.js';
   import { Loader2, Pencil } from 'lucide-svelte';
   import moment from 'moment';
+  import { Switch } from '$lib/components/ui/switch';
 
   export let data;
 
@@ -16,6 +17,15 @@
   let errorMessage = '';
 
   let transaction: Transaction = defaultTransaction;
+  let isIncome = false;
+
+  function realValue(amount: number, isIncome: boolean) {
+    if (isIncome) {
+      return amount > 0 ? amount : amount * -1;
+    } else {
+      return amount < 0 ? amount : amount * -1;
+    }
+  }
 
   const client = useQueryClient();
 
@@ -36,7 +46,7 @@
         date: transaction.date,
         category_id: transaction.category_id,
         account_id: transaction.account_id,
-        amount: transaction.amount
+        amount: realValue(transaction.amount, isIncome)
       });
     },
     updateFn: (transactions: Transaction[], transaction: Transaction) => {
@@ -55,12 +65,13 @@
         date: transaction.date,
         category_id: transaction.category_id,
         account_id: transaction.account_id,
-        amount: transaction.amount
+        amount: realValue(transaction.amount, isIncome)
       });
     },
     updateFn: (transactions: Transaction[], transaction: Transaction) => {
       transaction.account = $accountsQuery.data?.find((a) => a.id === transaction.account_id);
       transaction.category = $categoriesQuery.data?.find((c) => c.id === transaction.category_id);
+      transaction.amount = realValue(transaction.amount, isIncome);
 
       return transactions.map((t) => (t.id === transaction.id ? transaction : t));
     }
@@ -103,7 +114,8 @@
       class="h-fit"
       on:click={() => {
         dialogOpen = true;
-        transaction = defaultTransaction;
+        transaction = structuredClone(defaultTransaction);
+        isIncome = false;
       }}>Add</Button>
   </div>
 
@@ -139,6 +151,7 @@
               on:click={() => {
                 dialogOpen = true;
                 transaction = t;
+                isIncome = transaction.amount > 0;
               }}><Pencil /></Button>
           </div>
         {/each}
@@ -172,6 +185,7 @@
           <Label class="text-zinc-400">Date</Label>
           <Input type="date" bind:value={transaction.date} required />
         </div>
+
         <div class="flex flex-col gap-2">
           <Label class="text-zinc-400">Account</Label>
           <select
@@ -185,6 +199,7 @@
             {/each}
           </select>
         </div>
+
         <div class="flex flex-col gap-2">
           <Label class="text-zinc-400">Category</Label>
           <select
@@ -199,9 +214,15 @@
             {/each}
           </select>
         </div>
+
         <div class="flex flex-col gap-2">
           <Label class="text-zinc-400">Amount</Label>
           <Input type="number" placeholder="Account" bind:value={transaction.amount} required />
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <Switch id="airplane-mode" bind:checked={isIncome} />
+          <Label for="airplane-mode">Income?</Label>
         </div>
 
         {#if errorMessage}
