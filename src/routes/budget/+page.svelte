@@ -7,6 +7,7 @@
   import axios from 'axios';
   import { defaultCategory, type Category, type Budget } from '$lib/types.js';
   import * as Dialog from '$lib/components/ui/dialog';
+  import { onMount } from 'svelte';
 
   export let data;
 
@@ -15,6 +16,7 @@
 
   let dialogAddCategoryIsOpen = false;
   let dialogEditCategoryIsOpen = false;
+  let editingBudgetId = 0;
 
   let category: Category = defaultCategory;
 
@@ -97,6 +99,12 @@
       return budgets;
     }
   });
+
+  onMount(() => {
+    document.addEventListener('click', () => {
+      editingBudgetId = 0;
+    });
+  });
 </script>
 
 <div class="flex flex-col gap-5">
@@ -132,10 +140,10 @@
     </div>
   </div>
 
-  {#if $budgetsQuery.isLoading || $categoriesQuery.isLoading || $budgetsQuery.isRefetching}
+  {#if $budgetsQuery.isLoading || $categoriesQuery.isLoading}
     <div class="flex place-content-center"><Loader2 class="animate-spin" /></div>
   {:else if $categoriesQuery.data && $budgetsQuery.data}
-    <div class="inline-grid w-full auto-cols-auto grid-cols-[auto_auto_auto] items-center gap-2">
+    <div class="inline-grid w-full auto-cols-auto grid-cols-[auto_1fr_1fr] items-center gap-2">
       <h3 class="font-bold text-zinc-400">Category</h3>
       <h3 class="text-right font-bold text-zinc-400">Budgeted</h3>
       <h3 class="text-right font-bold text-zinc-400">Spent</h3>
@@ -156,13 +164,23 @@
         {#each $budgetsQuery.data.filter((b) => {
           return b.year === year && b.month === monthIndex + 1 && b.category_id === c.id;
         }) as budget}
-          <Input
-            type="number"
-            class="text-right"
-            bind:value={budget.budgeted_amount}
-            on:blur={() => {
-              $editBudgetMutation.mutate(budget);
-            }} />
+          {#if editingBudgetId === budget.id}
+            <Input
+              type="number"
+              class="h-8 rounded-md border border-zinc-800 bg-background px-3 py-0 text-right text-base"
+              bind:value={budget.budgeted_amount}
+              on:blur={() => {
+                $editBudgetMutation.mutate(budget);
+                editingBudgetId = 0;
+              }}
+              autofocus />
+          {:else}
+            <button
+              class="text-right"
+              on:click|stopPropagation={() => {
+                editingBudgetId = budget.id;
+              }}>{formatAmountToCurrency(budget.budgeted_amount)}</button>
+          {/if}
 
           <p class="text-right">{formatAmountToCurrency(budget.sum ?? 0)}</p>
         {/each}
