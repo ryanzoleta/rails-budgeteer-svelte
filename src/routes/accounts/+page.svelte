@@ -34,6 +34,8 @@
     updated_at: new Date()
   };
 
+  let errorMessage = '';
+
   onMount(() => {
     document.addEventListener('click', () => {
       editingAccountTypeId = 0;
@@ -144,13 +146,7 @@
       loading = false;
     },
     updateFn: (accounts: Account[], account: Account) => {
-      accounts?.push({
-        id: -1,
-        name: account.name,
-        account_type_id: 1,
-        created_at: new Date(),
-        updated_at: new Date()
-      });
+      accounts?.push(account);
       return accounts;
     }
   });
@@ -189,14 +185,18 @@
     <form
       class="flex gap-2"
       on:submit={() => {
+        accountToBeAdded.account_type = $accountTypesQuery.data?.find(
+          (a) => a.id === accountToBeAdded.account_type_id
+        );
         $addAccountMutation.mutate(structuredClone(accountToBeAdded));
       }}>
-      <Input placeholder="Add a new account" bind:value={accountToBeAdded.name} />
+      <Input placeholder="Add a new account" bind:value={accountToBeAdded.name} required />
       <select
         name="accountType"
         id="accountType"
         class="rounded-md border border-zinc-800 bg-background px-3 text-sm"
-        bind:value={accountToBeAdded.account_type_id}>
+        bind:value={accountToBeAdded.account_type_id}
+        required>
         {#if $accountTypesQuery.data}
           {#each $accountTypesQuery.data as accountType, index}
             <option value={accountType.id} selected={index === 0 ? true : false}
@@ -236,7 +236,7 @@
       on:submit={() => {
         $addAccountTypeMutation.mutate(accountTypeName);
       }}>
-      <Input placeholder="Add a new account type" bind:value={accountTypeName} />
+      <Input placeholder="Add a new account type" bind:value={accountTypeName} required />
       <Button variant="default" disabled={loading}>Add</Button>
     </form>
 
@@ -258,6 +258,7 @@
                 $editAccountTypeMutation.mutate(accountType);
               }}
               class="text-base"
+              required
               autofocus />
 
             <Button variant="secondary">Save</Button>
@@ -293,10 +294,16 @@
       </Dialog.Header>
       <form
         on:submit={() => {
-          accountToBeEdited.account_type = $accountTypesQuery.data?.find(
-            (a) => a.id === accountToBeEdited.account_type_id
-          );
-          $editAccountMutation.mutate(accountToBeEdited);
+          if (accountToBeEdited.name === '') {
+            errorMessage = 'Please provide an account name';
+          } else {
+            accountToBeEdited.account_type = $accountTypesQuery.data?.find(
+              (a) => a.id === accountToBeEdited.account_type_id
+            );
+            $editAccountMutation.mutate(accountToBeEdited);
+            dialogOpen = false;
+            errorMessage = '';
+          }
         }}
         class="flex flex-col gap-5 py-2">
         <div class="flex flex-col gap-1">
@@ -319,6 +326,8 @@
             {/if}
           </select>
         </div>
+
+        <p class="text-red-500">{errorMessage}</p>
       </form>
 
       <div class="flex place-content-between">
@@ -341,11 +350,16 @@
           <Button
             variant="default"
             on:click={() => {
-              accountToBeEdited.account_type = $accountTypesQuery.data?.find(
-                (a) => a.id === accountToBeEdited.account_type_id
-              );
-              $editAccountMutation.mutate(accountToBeEdited);
-              dialogOpen = false;
+              if (accountToBeEdited.name === '') {
+                errorMessage = 'Please provide an account name';
+              } else {
+                accountToBeEdited.account_type = $accountTypesQuery.data?.find(
+                  (a) => a.id === accountToBeEdited.account_type_id
+                );
+                $editAccountMutation.mutate(accountToBeEdited);
+                dialogOpen = false;
+                errorMessage = '';
+              }
             }}>Save</Button>
         </div>
       </div>
