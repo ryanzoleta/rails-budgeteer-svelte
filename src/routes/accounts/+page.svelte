@@ -7,13 +7,16 @@
   import { Loader2, Trash2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
   import { formatAmountToCurrency, generateMutation } from '$lib/utils.js';
+  import * as Dialog from '$lib/components/ui/dialog';
+  import Label from '$lib/components/ui/label/label.svelte';
 
   export let data;
 
   let loading = false;
   let accountTypeName = '';
-  let editingAccountId = 0;
   let editingAccountTypeId = 0;
+
+  let dialogOpen = false;
 
   let accountToBeAdded: Account = {
     id: 0,
@@ -23,9 +26,16 @@
     updated_at: new Date()
   };
 
+  let accountToBeEdited: Account = {
+    id: 0,
+    name: '',
+    account_type_id: 0,
+    created_at: new Date(),
+    updated_at: new Date()
+  };
+
   onMount(() => {
     document.addEventListener('click', () => {
-      editingAccountId = 0;
       editingAccountTypeId = 0;
     });
   });
@@ -118,7 +128,8 @@
     queryFn: async () => {
       const response = await axios.get(`${data.apiHost}/accounts`);
       return response.data as Account[];
-    }
+    },
+    refetchOnWindowFocus: false
   });
 
   const addAccountMutation = generateMutation(client, {
@@ -149,10 +160,15 @@
     mutationKey: ['edit', 'account'],
     mutationFn: async (account: Account) => {
       await axios.patch(`${data.apiHost}/accounts/${account.id}`, {
-        name: account.name
+        name: account.name,
+        account_type_id: account.account_type_id
       });
     },
-    updateFn: (accounts: Account[]) => accounts
+    updateFn: (accounts: Account[], account: Account) => {
+      return accounts.map((a) => {
+        return a.id === account.id ? account : a;
+      });
+    }
   });
 
   const deleteAccountMutation = generateMutation(client, {
@@ -195,47 +211,18 @@
     {:else if $accountQuery.data}
       <div class="flex flex-col gap-3">
         {#each $accountQuery.data as account}
-          {#if editingAccountId === account.id}
-            <form
-              on:submit={() => {
-                $editAccountMutation.mutate(account);
-                editingAccountId = 0;
-              }}
-              class="flex flex-1 gap-3 py-2">
-              <Input
-                bind:value={account.name}
-                on:blur={() => {
-                  $editAccountMutation.mutate(account);
-                }}
-                class="text-base"
-                autofocus />
-
-              <Button variant="secondary">Save</Button>
-            </form>
-          {:else}
-            <button
-              class="flex place-content-between place-items-center gap-2 rounded-md bg-zinc-900 px-5 py-3"
-              on:click|stopPropagation={() => {
-                editingAccountId = account.id;
-              }}>
-              <div class="grid flex-1 grid-cols-[1fr_1fr] place-items-start">
-                <div class="flex flex-col place-items-start">
-                  <p class="font-bold">{account.name}</p>
-                  <p class="text-sm text-zinc-500">{account.account_type?.name}</p>
-                </div>
-                <p>{formatAmountToCurrency(account.balance ?? 0)}</p>
-              </div>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                class="group hover:bg-destructive"
-                on:click={(e) => {
-                  e.stopPropagation();
-                  $deleteAccountMutation.mutate(account);
-                }}><Trash2 class="h-5 w-5 text-zinc-500 group-hover:text-red-300" /></Button>
-            </button>
-          {/if}
+          <button
+            class="flex place-content-between place-items-center gap-2 rounded-md bg-zinc-900 px-5 py-3 transition duration-200 hover:bg-zinc-700"
+            on:click|stopPropagation={() => {
+              accountToBeEdited = account;
+              dialogOpen = true;
+            }}>
+            <div class="flex flex-col place-items-start">
+              <p class="font-bold">{account.name}</p>
+              <p class="text-sm text-zinc-500">{account.account_type?.name}</p>
+            </div>
+            <p>{formatAmountToCurrency(account.balance ?? 0)}</p>
+          </button>
         {/each}
       </div>
     {/if}
@@ -297,3 +284,71 @@
     {/if}
   </div>
 </div>
+
+{#if $accountTypesQuery.data}
+  <Dialog.Root bind:open={dialogOpen}>
+    <Dialog.Content>
+      <Dialog.Header>
+        <Dialog.Title>Edit Account</Dialog.Title>
+      </Dialog.Header>
+      <form
+        on:submit={() => {
+          accountToBeEdited.account_type = $accountTypesQuery.data?.find(
+            (a) => a.id === accountToBeEdited.account_type_id
+          );
+          $editAccountMutation.mutate(accountToBeEdited);
+        }}
+        class="flex flex-col gap-5 py-2">
+        <div class="flex flex-col gap-1">
+          <Label>Name</Label>
+          <Input bind:value={accountToBeEdited.name} class="text-base" autofocus />
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <Label>Account Type</Label>
+          <select
+            name="accountType"
+            id="accountType"
+            class="h-10 rounded-md border border-zinc-800 bg-background px-3 text-sm"
+            bind:value={accountToBeEdited.account_type_id}>
+            {#if $accountTypesQuery.data}
+              {#each $accountTypesQuery.data as accountType, index}
+                <option value={accountType.id} selected={index === 0 ? true : false}
+                  >{accountType.name}</option>
+              {/each}
+            {/if}
+          </select>
+        </div>
+      </form>
+
+      <div class="flex place-content-between">
+        <Button
+          variant="destructive"
+          on:click={(e) => {
+            e.preventDefault();
+            $deleteAccountMutation.mutate(accountToBeEdited);
+            dialogOpen = false;
+          }}>Delete</Button>
+
+        <div class="flex place-content-end gap-2">
+          <Button
+            variant="secondary"
+            on:click={(e) => {
+              e.preventDefault();
+              dialogOpen = false;
+            }}>Cancel</Button>
+
+          <Button
+            variant="default"
+            on:click={() => {
+              accountToBeEdited.account_type = $accountTypesQuery.data?.find(
+                (a) => a.id === accountToBeEdited.account_type_id
+              );
+              $editAccountMutation.mutate(accountToBeEdited);
+              dialogOpen = false;
+            }}>Save</Button>
+        </div>
+      </div>
+    </Dialog.Content>
+  </Dialog.Root>
+{/if}
