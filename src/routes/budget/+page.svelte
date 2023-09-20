@@ -109,7 +109,7 @@
 
 <div class="flex flex-col gap-5">
   <div class="flex place-content-between">
-    <h1 class="text-xl font-bold">Budget</h1>
+    <h1 class="text-2xl font-bold">Budget</h1>
 
     <div class="flex place-items-center gap-3">
       <Button

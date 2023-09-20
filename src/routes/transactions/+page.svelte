@@ -109,7 +109,7 @@
 
 <div class="flex flex-col gap-5">
   <div class="flex place-content-between place-items-center">
-    <h1 class="text-xl font-bold">Transactions</h1>
+    <h1 class="text-2xl font-bold">Transactions</h1>
     <Button
       class="h-fit"
       on:click={() => {
@@ -126,7 +126,7 @@
       <p class="border-b border-zinc-400 font-bold text-zinc-400">Date</p>
       <p class="border-b border-zinc-400 font-bold text-zinc-400">Account</p>
       <p class="border-b border-zinc-400 font-bold text-zinc-400">Category</p>
-      <p class="border-b border-zinc-400 font-bold text-zinc-400">Amount</p>
+      <p class="border-b border-zinc-400 text-right font-bold text-zinc-400">Amount</p>
       <p class="border-b border-zinc-400 text-center font-bold text-zinc-400">Edit</p>
 
       {#if $transactionsQuery.data}
@@ -140,7 +140,7 @@
           <div>
             {t.category?.name}
           </div>
-          <div>
+          <div class="text-right">
             {formatAmountToCurrency(t.amount ?? 0)}
           </div>
           <div class="flex place-content-center">

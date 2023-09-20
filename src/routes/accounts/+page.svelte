@@ -180,7 +180,7 @@
 
 <div class="flex flex-col gap-10">
   <div class="flex flex-col gap-3">
-    <h1 class="text-xl font-bold">Your Accounts</h1>
+    <h1 class="text-2xl font-bold">Your Accounts</h1>
 
     <form
       class="flex gap-2"
@@ -229,7 +229,7 @@
   </div>
 
   <div class="flex flex-col gap-3">
-    <h1 class="text-xl font-bold">Account Types</h1>
+    <h1 class="text-2xl font-bold">Account Types</h1>
 
     <form
       class="flex gap-2"
