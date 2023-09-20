@@ -96,9 +96,8 @@
         budgeted_amount: budget.budgeted_amount
       });
     },
-    updateFn: (budgets: Budget[]) => {
-      return budgets;
-    }
+    updateFn: (budgets: Budget[], budget: Budget) =>
+      budgets.map((b) => (b.id === budget.id ? budget : b))
   });
 
   onMount(() => {
