@@ -173,7 +173,7 @@
           <Input type="date" bind:value={transaction.date} required />
         </div>
         <div class="flex flex-col gap-2">
-          <Label class="text-zinc-400">Amount</Label>
+          <Label class="text-zinc-400">Account</Label>
           <select
             name="category"
             id="category"
@@ -200,7 +200,7 @@
           </select>
         </div>
         <div class="flex flex-col gap-2">
-          <Label class="text-zinc-400">Account</Label>
+          <Label class="text-zinc-400">Amount</Label>
           <Input type="number" placeholder="Account" bind:value={transaction.amount} required />
         </div>
 
