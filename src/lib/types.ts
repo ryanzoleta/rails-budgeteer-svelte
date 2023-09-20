@@ -1,4 +1,3 @@
-import type { Moment } from 'moment';
 import { formatDate } from './utils';
 
 export type AccountType = {
@@ -14,6 +13,7 @@ export type Account = {
   account_type_id: number;
   created_at: Date;
   updated_at: Date;
+  balance?: number;
 };
 
 export type Category = {

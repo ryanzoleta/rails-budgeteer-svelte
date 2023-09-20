@@ -6,7 +6,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Loader2, Trash2 } from 'lucide-svelte';
   import { onMount } from 'svelte';
-  import { generateMutation } from '$lib/utils.js';
+  import { formatAmountToCurrency, generateMutation } from '$lib/utils.js';
 
   export let data;
 
@@ -218,7 +218,10 @@
               on:click|stopPropagation={() => {
                 editingAccountId = account.id;
               }}>
-              <p>{account.name}</p>
+              <div class="grid flex-1 grid-cols-[1fr_1fr] place-items-start">
+                <p>{account.name}</p>
+                <p>{formatAmountToCurrency(account.balance ?? 0)}</p>
+              </div>
 
               <Button
                 variant="ghost"
